@@ -46,7 +46,7 @@ struct IService {
 void menu();
 
 // hook functions
-string writeConvertedData(time_t milliseconds);
+string writeConvertedDataTime(time_t milliseconds);
 void verifyIfFileOpened() {};
 
 // page functions
@@ -55,8 +55,8 @@ void findClientPage();
 void listClientsPage();
 
 void createAnimalPage();
-void findAnimalPage() {};
-void listAnimalPage() {};
+void findAnimalPage();
+void listAnimalPage();
 
 void createServicePage() {};
 void findServicePage() {};
@@ -65,7 +65,17 @@ void listServicePage() {};
 // find data functions
 long int findClient(char document[20]);
 long int findAnimal(char name[100], char document[20]);
-long int findService() {};
+void findService() {};
+
+string writeConvertedDataTime(time_t milliseconds) {
+    struct tm* timeinfo;
+    char buffer[80];
+
+    timeinfo = localtime(&milliseconds);
+
+    strftime(buffer, 80, "%d/%m/%y %H:%M:%S", timeinfo);
+    return buffer;
+}
 
 string writeConvertedData(time_t milliseconds) {
     struct tm* timeinfo;
@@ -73,7 +83,7 @@ string writeConvertedData(time_t milliseconds) {
 
     timeinfo = localtime(&milliseconds);
 
-    strftime(buffer, 80, "%d/%m/%y %H:%M:%S", timeinfo);
+    strftime(buffer, 80, "%d/%m/%y", timeinfo);
     return buffer;
 }
 
@@ -286,7 +296,7 @@ void findClientPage() {
             cout << setw(30) << client.name;
             cout << setw(20) << client.document;
             cout << setw(20) << client.phone;
-            cout << setw(20) << writeConvertedData(client.createdAt);
+            cout << setw(20) << writeConvertedDataTime(client.createdAt);
             cout << "\n---------------------------------------------------------------------------------\n";
             find = true;
         }
@@ -301,7 +311,7 @@ void findClientPage() {
     cout << "\nO que deseja fazer? \n\n";
 
     cout << "1. Cadastrar novo responsável\n";
-    cout << "2. Buscar novo responsáveis\n";
+    cout << "2. Buscar novo responsável\n";
     cout << "3. Listar responsáveis\n";
     cout << "4. Voltar ao menu principal\n";
     cout << "0. Sair do programa\n\n";
@@ -359,7 +369,7 @@ void listClientsPage() {
         cout << setw(30) << client.name;
         cout << setw(20) << client.document;
         cout << setw(20) << client.phone;
-        cout << setw(20) << writeConvertedData(client.createdAt);
+        cout << setw(20) << writeConvertedDataTime(client.createdAt);
         cout << "\n---------------------------------------------------------------------------------\n";
     }
 
@@ -428,7 +438,7 @@ void createAnimalPage() {
         newAnimal.id = newAnimal.id + 1;
     }
 
-    cout << setw(50) << "Digite o documento do responsável (XXX.XXX.XXX-XX): ";
+    cout << setw(55) << "Digite o documento do responsável (XXX.XXX.XXX-XX): ";
     cin.ignore(80, '\n');
     cin.getline(document, sizeof(document));
 
@@ -437,6 +447,7 @@ void createAnimalPage() {
 
     while (fread(&client, sizeof(client), 1, pontClientFile) != NULL) {
         if (strcmp(client.document, document) == 0) {
+            newAnimal.idClient = client.id;
             fclose(pontClientFile);
             break;
         }
@@ -444,18 +455,18 @@ void createAnimalPage() {
 
     fclose(pontClientFile);
 
-    if (client.id > 0) {
-        cout << setw(50) << "Nome do pet: ";
+    if (client.id > 0 && strcmp(client.document, document) == 0) {
+        cout << setw(55) << "Nome do pet: ";
         cin.getline(newAnimal.name, sizeof(newAnimal.name));
         strupr(newAnimal.name);
 
-        cout << setw(50) << "Dia de nascimento do pet (apenas numeros): ";
+        cout << setw(55) << "Dia de nascimento do pet (apenas numeros): ";
         cin >> day;
 
-        cout << setw(50) << "Mês de nascimento do pet (apenas numeros): ";
+        cout << setw(55) << "Mês de nascimento do pet (apenas numeros): ";
         cin >> month;
 
-        cout << setw(50) << "Ano de nascimento do pet (apenas numeros): ";
+        cout << setw(55) << "Ano de nascimento do pet (apenas numeros): ";
         cin >> year;
 
         time(&newAnimal.birthDate);
@@ -464,7 +475,7 @@ void createAnimalPage() {
         timeinfo->tm_mon = month - 1;
         timeinfo->tm_mday = day;
 
-        mktime(timeinfo);
+        newAnimal.birthDate = mktime(timeinfo);
 
         time(&newAnimal.createdAt);
 
@@ -533,146 +544,151 @@ void createAnimalPage() {
     } while (navigationOp != 0);
 }
 
-//void findAnimalPage() {
-//    int navigationOp;
-//    IClient client;
-//    char document[20];
-//    bool find = false;
-//    pontClientFile = fopen(clientPathname, "rb");
-//    verifyIfFileOpened(pontClientFile);
-//
-//    cout << "---------------------------------------------------------------------------------\n";
-//    cout << "                              Buscar por Responsável                             \n";
-//    cout << "---------------------------------------------------------------------------------\n\n";
-//
-//    cout << "Qual o documento do responsável que deseja buscar?\n";
-//    cin >> document;
-//
-//    while (fread(&client, sizeof(client), 1, pontClientFile) != NULL) {
-//        if (strcmp(document, client.document) == 0) {
-//            cout << "---------------------------------------------------------------------------------\n";
-//            cout << setw(8) << "Codigo";
-//            cout << setw(30) << "Nome";
-//            cout << setw(20) << "Documento";
-//            cout << setw(20) << "Telefone";
-//            cout << setw(20) << "Data de criação";
-//            cout << "\n---------------------------------------------------------------------------------\n";
-//            cout << setw(8) << client.id;
-//            cout << setw(30) << client.name;
-//            cout << setw(20) << client.document;
-//            cout << setw(20) << client.phone;
-//            cout << setw(20) << writeConvertedData(client.createdAt);
-//            cout << "\n---------------------------------------------------------------------------------\n";
-//            find = true;
-//        }
-//    }
-//
-//    if (!find) {
-//        cout << "\nNenhum representante encontrado\n";
-//    }
-//
-//    fclose(pontClientFile);
-//
-//    cout << "\nO que deseja fazer? \n\n";
-//
-//    cout << "1. Cadastrar novo responsável\n";
-//    cout << "2. Buscar novo responsáveis\n";
-//    cout << "3. Listar responsáveis\n";
-//    cout << "4. Voltar ao menu principal\n";
-//    cout << "0. Sair do programa\n\n";
-//
-//    do {
-//        cin >> navigationOp;
-//
-//        switch (navigationOp) {
-//        case 1:
-//            system("cls");
-//            createClientPage();
-//
-//            break;
-//        case 2:
-//            system("cls");
-//            findClientPage();
-//
-//            break;
-//        case 3:
-//            system("cls");
-//            listClientsPage();
-//
-//            break;
-//        case 4:
-//            system("cls");
-//            menu();
-//
-//            break;
-//        case 0:
-//            exit(0);
-//
-//            break;
-//        }
-//    } while (navigationOp != 0);
-//}
-//
-//void listAnimalPage() {
-//    int navigationOp;
-//    IClient client;
-//    pontClientFile = fopen(clientPathname, "rb");
-//    verifyIfFileOpened(pontClientFile);
-//
-//    cout << "---------------------------------------------------------------------------------\n";
-//    cout << "                            Relatório de Responsáveis                            \n";
-//    cout << "---------------------------------------------------------------------------------\n";
-//    cout << setw(8) << "Codigo";
-//    cout << setw(30) << "Nome";
-//    cout << setw(20) << "Documento";
-//    cout << setw(20) << "Telefone";
-//    cout << setw(20) << "Data de criação";
-//    cout << "\n---------------------------------------------------------------------------------\n";
-//
-//    while (fread(&client, sizeof(client), 1, pontClientFile) != NULL) {
-//        cout << setw(8) << client.id;
-//        cout << setw(30) << client.name;
-//        cout << setw(20) << client.document;
-//        cout << setw(20) << client.phone;
-//        cout << setw(20) << writeConvertedData(client.createdAt);
-//        cout << "\n---------------------------------------------------------------------------------\n";
-//    }
-//
-//    fclose(pontClientFile);
-//
-//    cout << "\nO que deseja fazer? \n\n";
-//
-//    cout << "1. Cadastrar novo responsável\n";
-//    cout << "2. Buscar por responsável\n";
-//    cout << "3. Voltar ao menu principal\n";
-//    cout << "0. Sair do programa\n\n";
-//
-//    do {
-//        cin >> navigationOp;
-//
-//        switch (navigationOp) {
-//        case 1:
-//            system("cls");
-//            createClientPage();
-//
-//            break;
-//        case 2:
-//            system("cls");
-//            findClientPage();
-//
-//            break;
-//        case 3:
-//            system("cls");
-//            menu();
-//
-//            break;
-//        case 0:
-//            exit(0);
-//
-//            break;
-//        }
-//    } while (navigationOp != 0);
-//}
+void findAnimalPage() {
+    int navigationOp;
+    IAnimal animal;
+    char name[100];
+    bool find = false;
+    pontAnimalFile = fopen(animalPathname, "rb");
+    verifyIfFileOpened(pontAnimalFile);
+
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << "                                  Buscar por Pet                                 \n";
+    cout << "---------------------------------------------------------------------------------\n\n";
+
+    cout << "Qual o nome do pet que deseja buscar?\n";
+    cin.ignore(80, '\n');
+    cin.getline(name, sizeof(name));
+    strupr(name);
+
+    while (fread(&animal, sizeof(animal), 1, pontAnimalFile) != NULL) {
+        if (strcmp(name, animal.name) == 0) {
+            if (!find) {
+                cout << "\n---------------------------------------------------------------------------------\n";
+                cout << setw(8) << "Codigo";
+                cout << setw(24) << "Código do responsável";
+                cout << setw(10) << "Nome";
+                cout << setw(20) << "Data de nascimento";
+                cout << setw(20) << "Data de criação";
+                cout << "\n---------------------------------------------------------------------------------\n";
+            }
+
+            cout << setw(8) << animal.id;
+            cout << setw(24) << animal.idClient;
+            cout << setw(10) << animal.name;
+            cout << setw(20) << writeConvertedData(animal.birthDate);
+            cout << setw(20) << writeConvertedDataTime(animal.createdAt);
+            cout << "\n---------------------------------------------------------------------------------\n";
+            find = true;
+        }
+    }
+
+    if (!find) {
+        cout << "\nNenhum pet encontrado\n";
+    }
+
+    fclose(pontAnimalFile);
+
+    cout << "\nO que deseja fazer? \n\n";
+
+    cout << "1. Cadastrar novo pet\n";
+    cout << "2. Buscar novo pet\n";
+    cout << "3. Listar pets\n";
+    cout << "4. Voltar ao menu principal\n";
+    cout << "0. Sair do programa\n\n";
+
+    do {
+        cin >> navigationOp;
+
+        switch (navigationOp) {
+        case 1:
+            system("cls");
+            createAnimalPage();
+
+            break;
+        case 2:
+            system("cls");
+            findAnimalPage();
+
+            break;
+        case 3:
+            system("cls");
+            listAnimalPage();
+
+            break;
+        case 4:
+            system("cls");
+            menu();
+
+            break;
+        case 0:
+            exit(0);
+
+            break;
+        }
+    } while (navigationOp != 0);
+}
+
+void listAnimalPage() {
+    int navigationOp;
+    IAnimal animal;
+    pontAnimalFile = fopen(animalPathname, "rb");
+    verifyIfFileOpened(pontAnimalFile);
+
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << "                                Relatório de Pets                                \n";
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << setw(8) << "Codigo";
+    cout << setw(24) << "Código do responsável";
+    cout << setw(10) << "Nome";
+    cout << setw(20) << "Data de nascimento";
+    cout << setw(20) << "Data de criação";
+    cout << "\n---------------------------------------------------------------------------------\n";
+
+    while (fread(&animal, sizeof(animal), 1, pontAnimalFile) != NULL) {
+        cout << setw(8) << animal.id;
+        cout << setw(24) << animal.idClient;
+        cout << setw(10) << animal.name;
+        cout << setw(20) << writeConvertedData(animal.birthDate);
+        cout << setw(20) << writeConvertedDataTime(animal.createdAt);
+        cout << "\n---------------------------------------------------------------------------------\n";
+    }
+
+    fclose(pontAnimalFile);
+
+    cout << "\nO que deseja fazer? \n\n";
+
+    cout << "1. Cadastrar novo pet\n";
+    cout << "2. Buscar por pet\n";
+    cout << "3. Voltar ao menu principal\n";
+    cout << "0. Sair do programa\n\n";
+
+    do {
+        cin >> navigationOp;
+
+        switch (navigationOp) {
+        case 1:
+            system("cls");
+            createAnimalPage();
+
+            break;
+        case 2:
+            system("cls");
+            findAnimalPage();
+
+            break;
+        case 3:
+            system("cls");
+            menu();
+
+            break;
+        case 0:
+            exit(0);
+
+            break;
+        }
+    } while (navigationOp != 0);
+}
 
 long int findAnimal(char name[100], char document[20]) {
     IClient client;
@@ -681,17 +697,24 @@ long int findAnimal(char name[100], char document[20]) {
     verifyIfFileOpened(pontClientFile);
     pontAnimalFile = fopen(animalPathname, "rb");
     verifyIfFileOpened(pontAnimalFile);
+    bool findClient = false;
 
     while (fread(&client, sizeof(client), 1, pontClientFile) != NULL) {
         if (strcmp(client.document, document) == 0) {
+            findClient = true;
             break;
         }
     }
 
     fclose(pontClientFile);
 
+    if (!findClient) {
+        fclose(pontAnimalFile);
+        return -1;
+    }
+
     while (fread(&animal, sizeof(animal), 1, pontAnimalFile) != NULL) {
-        if (strcmp(animal.name, name) == 0) {
+        if (strcmp(animal.name, name) == 0 && client.id == animal.idClient) {
             int posicao = ftell(pontAnimalFile) - sizeof(animal);
             fclose(pontAnimalFile);
             return posicao;
