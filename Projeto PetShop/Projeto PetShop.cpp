@@ -46,6 +46,7 @@ struct IService {
 void menu();
 
 // hook functions
+string writeConvertedData(time_t milliseconds);
 string writeConvertedDataTime(time_t milliseconds);
 void verifyIfFileOpened() {};
 
