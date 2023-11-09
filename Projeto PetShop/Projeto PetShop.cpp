@@ -58,14 +58,13 @@ void createAnimalPage();
 void findAnimalPage();
 void listAnimalPage();
 
-void createServicePage() {};
-void findServicePage() {};
-void listServicePage() {};
+void createServicePage();
+void findServicePage();
+void listServicePage();
 
 // find data functions
 long int findClient(char document[20]);
 long int findAnimal(char name[100], char document[20]);
-void findService() {};
 
 string writeConvertedDataTime(time_t milliseconds) {
     struct tm* timeinfo;
@@ -165,8 +164,6 @@ void createClientPage() {
     verifyIfFileOpened(pontClientFile);
     
     while (fread(&newClient, sizeof(newClient), 1, pontClientFile) != NULL);
-
-    cout << newClient.id;
     
     fclose(pontClientFile);
 
@@ -485,7 +482,7 @@ void createAnimalPage() {
 
         if (toupper(op) == 'S') {
             if (findAnimal(newAnimal.name, document) != -1) {
-                cout << "Já existe um pet cadastrado com o nome informado.\n";
+                cout << "Já existe um pet cadastrado com o nome informado para o responsável informado.\n";
             }
             else {
                 pontAnimalFile = fopen(animalPathname, "ab");
@@ -723,6 +720,294 @@ long int findAnimal(char name[100], char document[20]) {
 
     fclose(pontAnimalFile);
     return -1;
+}
+
+void createServicePage() {
+    char op;
+    int navigationOp;
+    IClient client;
+    IAnimal animal;
+    IService newService;
+    char clientDocument[20];
+    char petName[100];
+    bool findClient = false;
+
+    newService.id = 0;
+
+    pontServiceFile = fopen(servicePathname, "rb");
+    verifyIfFileOpened(pontServiceFile);
+
+    while (fread(&newService, sizeof(newService), 1, pontServiceFile) != NULL);
+
+    fclose(pontServiceFile);
+
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << "                               Cadastro de Serviço                               \n";
+    cout << "---------------------------------------------------------------------------------\n\n";
+
+    if (newService.id == 0) {
+        newService.id = 1;
+    }
+    else {
+        newService.id = newService.id + 1;
+    }
+
+    cout << setw(55) << "Digite o documento do responsável (XXX.XXX.XXX-XX): ";
+    cin.ignore(80, '\n');
+    cin.getline(clientDocument, sizeof(clientDocument));
+    
+    cout << setw(55) << "Digite o nome do pet: ";
+    cin.getline(petName, sizeof(petName));
+    strupr(petName);
+
+    pontClientFile = fopen(clientPathname, "rb");
+    verifyIfFileOpened(pontClientFile);
+
+    while (fread(&client, sizeof(client), 1, pontClientFile) != NULL) {
+        if (strcmp(client.document, clientDocument) == 0) {
+            findClient = true;
+            fclose(pontClientFile);
+            break;
+        }
+    }    
+
+    fclose(pontClientFile);
+
+    pontAnimalFile = fopen(animalPathname, "rb");
+    verifyIfFileOpened(pontAnimalFile);
+    
+    while (fread(&animal, sizeof(animal), 1, pontAnimalFile) != NULL) {
+        if (strcmp(animal.name, petName) == 0 && strcmp(client.document, clientDocument) == 0) {
+            newService.idAnimal = animal.id;
+            fclose(pontAnimalFile);
+            break;
+        }
+    }
+
+    fclose(pontAnimalFile);
+
+    if (animal.id > 0 && findClient == true) {
+        cout << setw(55) << "Tipo do serviço: ";
+        cin.getline(newService.serviceType, sizeof(newService.serviceType));
+        strupr(newService.serviceType);
+        
+        cout << setw(55) << "Descrição do serviço: ";
+        cin.getline(newService.description, sizeof(newService.description));
+        strupr(newService.description);
+        
+        cout << setw(55) << "Valor do serviço: ";
+        cin >> newService.value;
+
+        time(&newService.createdAt);
+
+        cout << "\nConfirma o cadastro do serviço? Pressione S para confirmar \n";
+
+        cin >> op;
+
+        if (toupper(op) == 'S') {
+            pontServiceFile = fopen(servicePathname, "ab");
+            verifyIfFileOpened(pontServiceFile);
+            fwrite(&newService, sizeof(newService), 1, pontServiceFile);
+            fclose(pontServiceFile);
+
+            cout << "\nCadastro realizado com sucesso!\n";
+        }
+        else {
+            cout << "\nCadastro não realizado.\n";
+        }
+    }
+    else {
+        cout << "\nResponsável ou pet não encontrado!\n";
+    }
+
+    cout << "\nO que deseja fazer? \n\n";
+
+    cout << "1. Cadastrar novo serviço\n";
+    cout << "2. Ver serviço cadastrado\n";
+    cout << "3. Ver lista de serviços\n";
+    cout << "4. Voltar ao menu principal\n";
+    cout << "0. Sair do programa\n\n";
+
+    do {
+        cin >> navigationOp;
+
+        switch (navigationOp) {
+            case 1:
+                system("cls");
+                createServicePage();
+
+                break;
+            case 2:
+                system("cls");
+                findServicePage();
+
+                break;
+            case 3:
+                system("cls");
+                listServicePage();
+
+                break;
+            case 4:
+                system("cls");
+                menu();
+
+                break;
+            case 0:
+                exit(0);
+
+                break;
+        }
+    } while (navigationOp != 0);
+}
+
+void findServicePage() {
+    int navigationOp;
+    IService service;
+    char serviceType[100];
+    bool find = false;
+    pontServiceFile = fopen(servicePathname, "rb");
+    verifyIfFileOpened(pontServiceFile);
+
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << "                                Buscar por Serviço                               \n";
+    cout << "---------------------------------------------------------------------------------\n\n";
+
+    cout << "Qual o tipo de serviço que deseja buscar?\n";
+    cin.ignore(80, '\n');
+    cin.getline(serviceType, sizeof(serviceType));
+    strupr(serviceType);
+
+    while (fread(&service, sizeof(service), 1, pontServiceFile) != NULL) {
+        if (strcmp(serviceType, service.serviceType) == 0) {
+            if (!find) {
+                cout << "\n---------------------------------------------------------------------------------\n";
+                cout << setw(8) << "Codigo";
+                cout << setw(24) << "Código do pet";
+                cout << setw(20) << "Tipo do serviço";
+                cout << setw(40) << "Descrição do serviço";
+                cout << setw(20) << "Valor do serviço";
+                cout << setw(20) << "Data de criação";
+                cout << "\n---------------------------------------------------------------------------------\n";
+            }
+
+            cout << setw(8) << service.id;
+            cout << setw(24) << service.idAnimal;
+            cout << setw(20) << service.serviceType;
+            cout << setw(40) << service.description;
+            cout << setw(20) << service.value;
+            cout << setw(20) << writeConvertedDataTime(service.createdAt);
+            cout << "\n---------------------------------------------------------------------------------\n";
+            find = true;
+        }
+    }
+
+    if (!find) {
+        cout << "\nNenhum serviço encontrado\n";
+    }
+
+    fclose(pontServiceFile);
+
+    cout << "\nO que deseja fazer? \n\n";
+
+    cout << "1. Cadastrar novo serviço\n";
+    cout << "2. Buscar novo serviço\n";
+    cout << "3. Listar serviços\n";
+    cout << "4. Voltar ao menu principal\n";
+    cout << "0. Sair do programa\n\n";
+
+    do {
+        cin >> navigationOp;
+
+        switch (navigationOp) {
+        case 1:
+            system("cls");
+            createServicePage();
+
+            break;
+        case 2:
+            system("cls");
+            findServicePage();
+
+            break;
+        case 3:
+            system("cls");
+            listServicePage();
+
+            break;
+        case 4:
+            system("cls");
+            menu();
+
+            break;
+        case 0:
+            exit(0);
+
+            break;
+        }
+    } while (navigationOp != 0);
+}
+
+void listServicePage() {
+    int navigationOp;
+    IService service;
+    pontServiceFile = fopen(servicePathname, "rb");
+    verifyIfFileOpened(pontServiceFile);
+
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << "                              Relatório de Serviços                              \n";
+    cout << "---------------------------------------------------------------------------------\n";
+    cout << setw(8) << "Codigo";
+    cout << setw(24) << "Código do pet";
+    cout << setw(20) << "Tipo do serviço";
+    cout << setw(40) << "Descrição do serviço";
+    cout << setw(20) << "Valor do serviço";
+    cout << setw(20) << "Data de criação";
+    cout << "\n---------------------------------------------------------------------------------\n";
+
+    while (fread(&service, sizeof(service), 1, pontServiceFile) != NULL) {
+        cout << setw(8) << service.id;
+        cout << setw(24) << service.idAnimal;
+        cout << setw(20) << service.serviceType;
+        cout << setw(40) << service.description;
+        cout << setw(20) << service.value;
+        cout << setw(20) << writeConvertedDataTime(service.createdAt);
+        cout << "\n---------------------------------------------------------------------------------\n";
+    }
+
+    fclose(pontServiceFile);
+
+    cout << "\nO que deseja fazer? \n\n";
+
+    cout << "1. Cadastrar novo serviço\n";
+    cout << "2. Buscar por serviço\n";
+    cout << "3. Voltar ao menu principal\n";
+    cout << "0. Sair do programa\n\n";
+
+    do {
+        cin >> navigationOp;
+
+        switch (navigationOp) {
+        case 1:
+            system("cls");
+            createServicePage();
+
+            break;
+        case 2:
+            system("cls");
+            findServicePage();
+
+            break;
+        case 3:
+            system("cls");
+            menu();
+
+            break;
+        case 0:
+            exit(0);
+
+            break;
+        }
+    } while (navigationOp != 0);
 }
 
 int main()
